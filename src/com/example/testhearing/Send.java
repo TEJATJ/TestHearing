@@ -107,7 +107,7 @@ public void startStreaming() {
 
                     socket.send(packet);
                     System.out.println("MinBufferSize: " +minBufSize);
-
+                    socket.close();
 
                 }
 
