@@ -21,7 +21,7 @@ private Button startButton,stopButton;
 
 public byte[] buffer;
 public static DatagramSocket socket;
-private int port=50006;
+private int port=50008;
 AudioRecord recorder;
 
 private int sampleRate = 44100;
@@ -29,7 +29,7 @@ private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
 private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;       
 int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
 private boolean status = true;
-
+private boolean threadFlag=false;
 
 
 
@@ -44,7 +44,7 @@ public void onCreate(Bundle savedInstanceState) {
     startButton.setOnClickListener (startListener);
     stopButton.setOnClickListener (stopListener);
 
-    minBufSize += 2048;
+    minBufSize += 300;
     System.out.println("minBufSize: " + minBufSize);
 }
 
@@ -54,6 +54,8 @@ private final OnClickListener stopListener = new OnClickListener() {
     public void onClick(View arg0) {
                 status = false;
                 recorder.release();
+                if(threadFlag)
+                	threadFlag=false;
                 Log.d("VS","Recorder released");
     }
 
@@ -77,7 +79,8 @@ public void startStreaming() {
         @Override
         public void run() {
             try {
-
+            	if(!threadFlag){
+            		threadFlag=true;
                 DatagramSocket socket = new DatagramSocket();
                 Log.d("VS", "Socket Created");
 
@@ -86,7 +89,7 @@ public void startStreaming() {
                 Log.d("VS","Buffer created of size " + minBufSize);
                 DatagramPacket packet;
 
-                final InetAddress destination = InetAddress.getByName("192.168.1.5");
+                final InetAddress destination = InetAddress.getByName("192.168.154.1");
                 Log.d("VS", "Address retrieved");
 
 
@@ -95,7 +98,7 @@ public void startStreaming() {
 
                 recorder.startRecording();
 
-
+                
                 while(status == true) {
 
 
@@ -104,16 +107,16 @@ public void startStreaming() {
 
                     //putting buffer in the packet
                     packet = new DatagramPacket (buffer,buffer.length,destination,port);
-
+                    
                     socket.send(packet);
                     System.out.println("MinBufferSize: " +minBufSize);
-                    socket.close();
+
 
                 }
+                socket.close();
 
 
-
-            } catch(UnknownHostException e) {
+            } } catch(UnknownHostException e) {
                 Log.e("VS", "UnknownHostException");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -121,7 +124,7 @@ public void startStreaming() {
             } 
         }
 
-    });
+    },"RecordingTread");
     streamThread.start();
  }
  }
